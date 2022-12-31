@@ -40,7 +40,7 @@ const Home = ({navigation}) => {
   const dispatch = useDispatch();
   const toast = useToast();
   const {newsFeed} = useSelector(state => state.newsFeed);
-  const [range, setRange] = useState({no1: 0, no2: 50});
+  const [range, setRange] = useState({no1: 0, no2: 100});
   const [refreshing, setRefreshing] = useState(true);
   const [refetch, setRefetch] = useState(true);
   const [getLatestHeadlines, {isLoading: isGettingLatestHeadlines}] =
@@ -49,10 +49,11 @@ const Home = ({navigation}) => {
   const fetchLatestHeadlines = async () => {
     const res = await getLatestHeadlines({
       page: 1,
-      page_size: 10000,
+      page_size: range.no2,
     });
     if (res?.data) {
       dispatch(setNewsFeed(res?.data?.articles));
+      setRefreshing(false);
       return;
     }
     crashlytics().log(res?.error?.data?.message);
@@ -125,7 +126,7 @@ const Home = ({navigation}) => {
               disabled={refreshing}
               onPress={() => {
                 if (range.no1 !== 0) {
-                  setRange({no1: range.no1 - 50, no2: range.no2 - 50});
+                  setRange({no1: range.no1 - 100, no2: range.no2 - 100});
                 }
               }}>
               <LeftArrow marginRight={5} />
@@ -144,7 +145,7 @@ const Home = ({navigation}) => {
               onPress={() => {
                 setRange({
                   no1: range.no2,
-                  no2: range.no2 + 50,
+                  no2: range.no2 + 100,
                 });
               }}>
               <RightArrow marginRight={10} marginLeft={10} />

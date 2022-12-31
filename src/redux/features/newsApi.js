@@ -5,19 +5,10 @@ export const newsApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl,
     headers: {
-      'x-api-key': 'eS51Jikz9N7sbkGyrbTW8dRq1z2PdWDWs0nEEhcHbkk',
+      'x-api-key': 'RHSVVLZKYOFEFzP45cJqN2uw_3ps9_LnUboxc0zbuC0',
     },
   }),
   endpoints: builder => ({
-    getNewsBySearch: builder.mutation({
-      query: ({q, page, page_size}) => {
-        return {
-          url: 'search',
-          params: {q, lang: 'en', sort_by: 'relevancy', page, page_size},
-          method: 'GET',
-        };
-      },
-    }),
     getLatestHeadlines: builder.mutation({
       query: ({page, page_size}) => {
         return {
@@ -29,5 +20,4 @@ export const newsApi = createApi({
   }),
 });
 
-export const {useGetNewsBySearchMutation, useGetLatestHeadlinesMutation} =
-  newsApi;
+export const {useGetLatestHeadlinesMutation} = newsApi;
