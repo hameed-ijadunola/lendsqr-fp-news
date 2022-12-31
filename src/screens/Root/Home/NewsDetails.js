@@ -61,7 +61,7 @@ const NewsDetails = ({navigation, route}) => {
         </View>
 
         <View style={[styles.halfModal]}>
-          <WebView style={styles.container} source={{uri: params.url}} />
+          <WebView style={styles.webview} source={{uri: params.url}} />
         </View>
       </View>
     </>
@@ -80,13 +80,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     flex: 1,
   },
+  webview: {
+    backgroundColor: COLORS.white,
+    flex: 1,
+    borderRadius: 40,
+  },
   halfModal: {
     width: '100%',
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     backgroundColor: COLORS.white,
-    paddingHorizontal: 24,
-    paddingTop: 5,
+    paddingHorizontal: 10,
+    paddingTop: 15,
     flex: 1,
   },
   header: {

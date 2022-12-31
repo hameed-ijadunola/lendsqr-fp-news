@@ -6,6 +6,13 @@ export const newsApi = createApi({
     baseUrl,
   }),
   endpoints: builder => ({
+    getLatestHeadlines: builder.query({
+      query: args => {
+        return {
+          url: 'topstories.json',
+        };
+      },
+    }),
     getTopStoriesIds: builder.query({
       query: args => {
         return {

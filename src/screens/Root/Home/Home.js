@@ -1,20 +1,18 @@
 import {
+  ActivityIndicator,
   Alert,
   BackHandler,
   FlatList,
+  Image,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {StatusBar} from 'expo-status-bar';
-import BackArrow from '../../../assets/images/left_arrow.svg';
 import RightArrow from '../../../assets/images/right__arrow.svg';
-import RightArrowBlack from '../../../assets/images/right__arrow_black.svg';
 import LeftArrow from '../../../assets/images/left__arrow.svg';
 import {COLORS} from '../../../constants/index';
 import {
@@ -30,45 +28,59 @@ import {
   Montserrat_500Medium,
 } from '@expo-google-fonts/montserrat';
 import AppLoading from 'expo-app-loading';
-import {
-  useGetNewsDetailsMutation,
-  useGetTopStoriesIdsQuery,
-} from '../../../redux/features/newsApi';
-import {saveTopStoriesId, setNewsFeed} from '../../../redux/features/newsSlice';
+import {setNewsFeed} from '../../../redux/features/newsSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import {useToast} from 'react-native-toast-notifications';
 import {useFocusEffect} from '@react-navigation/native';
 import moment from 'moment';
+import {useGetLatestHeadlinesMutation} from '../../../redux/features/newsApi2';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const Home = ({navigation}) => {
-  const windowWidth = useWindowDimensions().width;
-  const windowHeight = useWindowDimensions().height;
   const dispatch = useDispatch();
   const toast = useToast();
-  const {topStoriesId, newsFeed} = useSelector(state => state.newsFeed);
-  const [range, setRange] = useState({no1: 0, no2: 10});
+  const {newsFeed} = useSelector(state => state.newsFeed);
+  const [range, setRange] = useState({no1: 0, no2: 50});
   const [refreshing, setRefreshing] = useState(true);
   const [refetch, setRefetch] = useState(true);
-  const {
-    data: getTopStoriesId,
-    isFetching,
-    isSuccess,
-  } = useGetTopStoriesIdsQuery({
-    refetchOnMountOrArgChange: true,
-  });
-  const [getNewsDetails, {isLoading: isGettingNewDetails}] =
-    useGetNewsDetailsMutation();
+  const [getLatestHeadlines, {isLoading: isGettingLatestHeadlines}] =
+    useGetLatestHeadlinesMutation();
+
   const fetchDetails = async arrIds => {
     let result = [];
     for (let i = 0; i < arrIds.length; i++) {
       const id = arrIds[i];
       const det = await getNewsDetails(id);
       if (det?.data) {
-        console.log(det?.data);
         result.push(det?.data);
       }
     }
     dispatch(setNewsFeed(result));
+  };
+
+  const fetchNewsBySearch = async () => {
+    const res = await getNewsBySearch({
+      q: 'Technology',
+      page: 1,
+      page_size: 10000,
+    });
+    console.log(res);
+  };
+  const fetchLatestHeadlines = async () => {
+    const res = await getLatestHeadlines({
+      page: 1,
+      page_size: 10000,
+    });
+    if (res?.data) {
+      dispatch(setNewsFeed(res?.data?.articles));
+      console.log(res?.data?.articles);
+      return;
+    }
+    crashlytics().log(res?.error?.data?.message);
+    toast.show(res?.error?.data?.message, {
+      placement: 'top',
+      duration: 5000,
+    });
     setRefreshing(false);
   };
 
@@ -98,13 +110,9 @@ const Home = ({navigation}) => {
   );
 
   useEffect(() => {
-    setRefreshing(true);
-    isSuccess && dispatch(saveTopStoriesId(getTopStoriesId));
-  }, [range, isFetching, isSuccess]);
-  useEffect(() => {
-    setRefreshing(true);
-    fetchDetails(topStoriesId.slice(range.no1, range.no2));
-  }, [topStoriesId, range]);
+    fetchLatestHeadlines();
+    console.log(range);
+  }, [range, refetch]);
 
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -126,7 +134,7 @@ const Home = ({navigation}) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={{flexDirection: 'row'}}>
-            <Text style={styles.title}>Latest Tech News</Text>
+            <Text style={styles.title}>Global News Headlines</Text>
           </View>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <TouchableOpacity
@@ -136,10 +144,10 @@ const Home = ({navigation}) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              disabled={refreshing || isGettingNewDetails}
+              disabled={refreshing}
               onPress={() => {
                 if (range.no1 !== 0) {
-                  setRange({no1: range.no1 - 10, no2: range.no2 - 10});
+                  setRange({no1: range.no1 - 50, no2: range.no2 - 50});
                 }
               }}>
               <LeftArrow marginRight={5} />
@@ -154,24 +162,12 @@ const Home = ({navigation}) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              disabled={refreshing || isGettingNewDetails}
+              disabled={refreshing}
               onPress={() => {
-                console.log('pressed');
-                range.no2 + 10 <= topStoriesId.length
-                  ? setRange({
-                      no1: range.no2,
-                      no2: range.no2 + 10,
-                    })
-                  : range.no2 === topStoriesId.length
-                  ? setRange({
-                      no1: range.no1,
-                      no2: topStoriesId.length,
-                    })
-                  : range.no2 + 10 > topStoriesId.length &&
-                    setRange({
-                      no1: range.no2,
-                      no2: topStoriesId.length,
-                    });
+                setRange({
+                  no1: range.no2,
+                  no2: range.no2 + 50,
+                });
               }}>
               <RightArrow marginRight={10} marginLeft={10} />
             </TouchableOpacity>
@@ -180,23 +176,34 @@ const Home = ({navigation}) => {
 
         <View style={[styles.halfModal]}>
           <FlatList
-            data={[...newsFeed].sort(
-              (a, b) =>
-                moment(b?.time).format('x') - moment(a?.time).format('x'),
-            )}
+            data={[...newsFeed]
+              ?.sort(
+                (a, b) =>
+                  moment(b?.published_date).format('x') -
+                  moment(a?.published_date).format('x'),
+              )
+              .slice(range.no1, range.no2)}
             showsVerticalScrollIndicator={false}
             renderItem={({item, index}) => {
               return (
                 <TouchableOpacity
                   style={styles.newsContainer}
-                  key={item?.id}
+                  key={item?._id}
                   onPress={() =>
                     navigation.navigate('NewsDetails', {
-                      url: item?.url,
+                      url: item?.link,
                       title: item?.title,
                     })
                   }>
                   <View style={styles.newsSubContainer}>
+                    <Image
+                      source={{uri: item?.media}}
+                      style={styles.img}
+                      resizeMode={'contain'}
+                    />
+                    <View style={styles.imgloader}>
+                      <ActivityIndicator size={'large'} color={'#dddddd90'} />
+                    </View>
                     <Text style={styles.newsTitle} numberOfLines={2}>
                       {item?.title}
                     </Text>
@@ -206,31 +213,25 @@ const Home = ({navigation}) => {
                         justifyContent: 'space-between',
                         width: '100%',
                       }}>
-                      <Text style={styles.text}>By: {item?.by}</Text>
                       <Text style={styles.text}>
-                        Time:
-                        {moment().isSame(
-                          new Date(item?.time * 1000).toISOString(),
-                          'day',
-                        )
-                          ? moment(
-                              new Date(item?.time * 1000).toISOString(),
-                            ).format('hh:mm a')
-                          : moment(
-                              new Date(item?.time * 1000).toISOString(),
-                            ).format('hh:mma | DD/MM/YY')}
+                        By: {item?.author || item?.authors || '___'}
+                      </Text>
+                      <Text style={styles.text}>
+                        {moment().isSame(item?.published_date, 'day')
+                          ? moment(item?.published_date).format('hh:mm a') +
+                            ' Today'
+                          : moment(item?.published_date).format(
+                              'hh:mma | DD/MM/YY',
+                            )}
                       </Text>
                     </View>
-                  </View>
-                  <View style={{paddingLeft: 10, justifyContent: 'center'}}>
-                    <RightArrowBlack />
                   </View>
                 </TouchableOpacity>
               );
             }}
             refreshControl={
               <RefreshControl
-                refreshing={refreshing || isGettingNewDetails}
+                refreshing={refreshing}
                 onRefresh={() => setRefetch(!refetch)}
               />
             }
@@ -252,6 +253,18 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'black',
     flex: 1,
+  },
+  img: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    backgroundColor: COLORS.black,
+  },
+  imgloader: {
+    position: 'absolute',
+    top: 85,
+    alignSelf: 'center',
+    zIndex: -1,
   },
   halfModal: {
     width: '100%',
@@ -280,6 +293,7 @@ const styles = StyleSheet.create({
     color: 'black',
     fontFamily: 'Poppins_500Medium',
     fontSize: 14,
+    marginTop: 10,
   },
   cancel: {
     right: 20,

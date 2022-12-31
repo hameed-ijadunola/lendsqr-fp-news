@@ -38,31 +38,16 @@ import KeyboardAvoidingWrapper from '../../../components/KeyboardAvoidingWrapper
 
 import {
   validateEmail,
-  validatePassword,
-  validateConfirmPassword,
   validateName,
+  validatePhoneNumber,
 } from '../../../helpers/validation/validation';
 import {useToast} from 'react-native-toast-notifications';
-import * as SQLite from 'expo-sqlite';
 import {useDispatch} from 'react-redux';
 import {saveCredentials} from '../../../redux/features/authSlice';
-
-function openDatabase() {
-  if (Platform.OS === 'web') {
-    return {
-      transaction: () => {
-        return {
-          executeSql: () => {},
-        };
-      },
-    };
-  }
-
-  const db = SQLite.openDatabase('UserDatabase.db');
-  return db;
-}
-
-const db = openDatabase();
+import auth from '@react-native-firebase/auth';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import GoogleSvg from '../../../assets/images/google.svg';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const SignUp = ({navigation}) => {
   const window = useWindowDimensions();
@@ -70,106 +55,85 @@ const SignUp = ({navigation}) => {
   const toast = useToast();
   const dispatch = useDispatch();
 
-  const [hidePassword, setHidePassword] = useState(true);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [state, setState] = useState({
     name: '',
     email: '',
-    password: '',
+    phonenumber: '',
   });
   const [error, setError] = useState({
     name: null,
     email: null,
-    password: null,
+    phonenumber: null,
   });
 
   ///handle back action
 
   const onSubmit = async () => {
-    setLoading(true);
     try {
-      const nameError = validateName(state.name);
-      const emailError = validateEmail(state.email);
-      const passwordError = validatePassword(state.password);
-      if (emailError || passwordError || nameError) {
-        setError({
-          ...error,
-          name: nameError,
-          email: emailError,
-          password: passwordError,
-        });
-        toast.show('Enter correct details', {
-          placement: 'bottom',
-          duration: 3000,
-        });
-        setLoading(false);
-        return;
-      } else {
-        setError({
-          ...error,
-          name: null,
-          email: null,
-          password: null,
-        });
-        console.log(state.name, state.email, state.password);
+      if (page === 1) {
+        setLoading(true);
 
-        db.transaction(tx => {
-          tx.executeSql(
-            'SELECT * FROM table_user WHERE user_email = ?',
-            [state.email],
-            (tx, resultSet) => {
-              const len = resultSet.rows.length;
-              if (len) {
-                toast.hideAll();
-                toast.show('Email is already registered');
-              } else {
-                tx.executeSql(
-                  'insert into table_user (user_name, user_email, user_password) VALUES (?,?,?)',
-                  [state.name, state.email, state.password],
-                  (tx, results) => {
-                    console.log(results);
-                    console.log('Results', results.rowsAffected);
-                    if (results.rowsAffected > 0) {
-                      toast.hideAll();
-                      toast.show('Signed up successful', {
-                        placement: 'top',
-                        duration: 2000,
-                      });
-                      db.transaction(tx => {
-                        tx.executeSql(
-                          `SELECT * FROM table_user WHERE user_email = ? AND user_password = ?`,
-                          [state.email, state.password],
-                          (tx, results) => {
-                            var len = results.rows.length;
-                            if (len > 0) {
-                              dispatch(saveCredentials(results.rows.item(0)));
-                            } else {
-                              navigation.navigate('SignIn');
-                            }
-                          },
-                        );
-                      });
-                    } else {
-                      toast.hideAll();
-                      toast.show('Sign up Failed');
-                    }
-                  },
-                );
-              }
-              setLoading(false);
-            },
-            (tx, error) => {
-              console.log(error);
-              setLoading(false);
-            },
-          );
-        });
+        const nameError = validateName(state.name);
+        const emailError = validateEmail(state.email);
+        const phoneNumberError = validatePhoneNumber(state.phonenumber);
+        if (emailError || nameError || phoneNumberError) {
+          setError({
+            ...error,
+            name: nameError,
+            email: emailError,
+            phonenumber: phoneNumberError,
+          });
+          toast.show('Enter correct details', {
+            placement: 'bottom',
+            duration: 5000,
+          });
+          setLoading(false);
+          return;
+        } else {
+          setError({
+            ...error,
+            name: null,
+            email: null,
+            phonenumber: null,
+          });
+          setPage(2);
+          setLoading(false);
+        }
+      } else if (page === 2) {
+        onGoogleButtonPress();
       }
     } catch (error) {
-      console.log('error SigningUp', error);
+      crashlytics().recordError(error);
+      toast.show('Sign up failed', {
+        placement: 'bottom',
+        duration: 5000,
+      });
       setLoading(false);
       return false;
     }
+  };
+
+  const onGoogleButtonPress = async () => {
+    setLoading(true);
+    await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+    const {idToken} = await GoogleSignin.signIn();
+
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+    const user_sign_in = auth().signInWithCredential(googleCredential);
+    user_sign_in
+      .then(user => {
+        console.log(user);
+        setLoading(false);
+      })
+      .catch(err => {
+        crashlytics().recordError(err);
+        console.log(err);
+        setLoading(false);
+      });
+    return auth().signInWithCredential(googleCredential);
   };
 
   let [fontsLoaded] = useFonts({
@@ -195,7 +159,11 @@ const SignUp = ({navigation}) => {
           top: 60,
           zIndex: 1,
         }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{padding: 5}}
+          onPress={() => {
+            page === 1 ? navigation.goBack() : setPage(1);
+          }}>
           <MaterialCommunityIcons
             name='keyboard-backspace'
             size={24}
@@ -203,72 +171,99 @@ const SignUp = ({navigation}) => {
           />
         </TouchableOpacity>
       </View>
-      <ScrollView>
-        <View style={[styles.safeArea, {marginTop: 60}]}>
+      <View style={[styles.safeArea, {marginTop: 60}]}>
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{'Create\nAccount'}</Text>
-          <Text style={styles.desc}>Sign up to get latest Tech News.</Text>
+          {page === 1 ? (
+            <Text style={styles.desc}>
+              Enter your personal details and continue.
+            </Text>
+          ) : (
+            <Text style={styles.desc}>Complete Sign up with Google</Text>
+          )}
 
-          <KeyboardAvoidingWrapper>
-            <View>
-              <MyTextInput
-                label='Name'
-                placeholder='Name'
-                placeholderTextColor={COLORS.placeholderTxt}
-                onChangeText={text => setState({...state, name: text})}
-                value={state.name}
-              />
-              {error.name !== null && (
-                <Text style={styles.errorText}>{error.name}</Text>
-              )}
-
-              <MyTextInput
-                label='Email'
-                placeholder='Enter email'
-                placeholderTextColor={COLORS.placeholderTxt}
-                onChangeText={text => setState({...state, email: text})}
-                value={state.email}
-              />
-              {error.email !== null && (
-                <Text style={styles.errorText}>{error.email}</Text>
-              )}
-
-              <MyTextInput
-                label='Password'
-                placeholder='Password'
-                placeholderTextColor={COLORS.placeholderTxt}
-                onChangeText={text => setState({...state, password: text})}
-                value={state.password}
-                secureTextEntry={hidePassword}
-                isPassword={true}
-                hidePassword={hidePassword}
-                setHidePassword={setHidePassword}
-              />
-              {error.password !== null && (
-                <Text style={styles.errorText}>{error.password}</Text>
-              )}
-
-              <TouchableOpacity
-                style={!loading ? [styles.redBtn] : [styles.grayBtn]}
-                onPress={onSubmit}>
-                {!loading ? (
-                  <Text style={styles.btnTxt}>Sign up</Text>
-                ) : (
-                  <ActivityIndicator size='small' color={COLORS.white} />
+          {page === 1 && (
+            <KeyboardAvoidingWrapper>
+              <View>
+                <MyTextInput
+                  label='Name'
+                  placeholder='Name'
+                  placeholderTextColor={COLORS.placeholderTxt}
+                  onChangeText={text => setState({...state, name: text})}
+                  value={state.name}
+                />
+                {error.name !== null && (
+                  <Text style={styles.errorText}>{error.name}</Text>
                 )}
+
+                <MyTextInput
+                  label='Email'
+                  placeholder='Enter email'
+                  placeholderTextColor={COLORS.placeholderTxt}
+                  onChangeText={text => setState({...state, email: text})}
+                  value={state.email}
+                />
+                {error.email !== null && (
+                  <Text style={styles.errorText}>{error.email}</Text>
+                )}
+                <MyTextInput
+                  label='Phone number'
+                  placeholder='Enter phone number'
+                  placeholderTextColor={COLORS.placeholderTxt}
+                  onChangeText={text => setState({...state, phonenumber: text})}
+                  value={state.phonenumber}
+                />
+                {error.phonenumber !== null && (
+                  <Text style={styles.errorText}>{error.phonenumber}</Text>
+                )}
+              </View>
+            </KeyboardAvoidingWrapper>
+          )}
+          <View style={styles.bottomBtn}>
+            <TouchableOpacity
+              style={
+                !loading
+                  ? page === 1
+                    ? [styles.redBtn]
+                    : Platform.OS === 'ios'
+                    ? [styles.googleBtnIos]
+                    : [styles.googleBtnAndr]
+                  : [styles.grayBtn]
+              }
+              onPress={onSubmit}>
+              {!loading ? (
+                <>
+                  {page === 2 && (
+                    <GoogleSvg width={25} height={25} marginRight={15} />
+                  )}
+                  <Text
+                    style={page === 1 ? styles.btnTxt : styles.googleBtnTxt}>
+                    {page === 1 ? 'Continue' : 'Complete Sign up'}
+                  </Text>
+                </>
+              ) : (
+                <ActivityIndicator size='small' color={COLORS.white} />
+              )}
+            </TouchableOpacity>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                marginBottom: 20,
+              }}>
+              <Text style={styles.desc}>Account registered? </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('SignIn');
+                }}>
+                <Text style={styles.linkTxt}>Sign in</Text>
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingWrapper>
-        </View>
-        <View style={{flexDirection: 'row', marginLeft: 24, marginBottom: 20}}>
-          <Text style={styles.desc}>Account registered? </Text>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('SignIn');
-            }}>
-            <Text style={styles.linkTxt}>Sign in</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -311,6 +306,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
+  bottomBtn: {
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    bottom: 0,
+    flexGrow: 1,
+    backgroundColor: COLORS.white,
+  },
   safeArea: {
     flex: 1,
     paddingHorizontal: 24,
@@ -344,6 +346,36 @@ const styles = StyleSheet.create({
   backIcon: {
     marginBottom: 30,
   },
+  googleBtnIos: {
+    width: '100%',
+    height: 48,
+    borderWidth: 2,
+    borderRadius: 5,
+    borderColor: '#dddddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginVertical: 24,
+    flexDirection: 'row',
+    shadowColor: '#171717',
+    shadowOffset: {width: -2, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  googleBtnAndr: {
+    width: '100%',
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginVertical: 24,
+    flexDirection: 'row',
+    borderColor: '#dddddd',
+    shadowColor: 'rgba(0,0,0,10)',
+    elevation: 3,
+  },
   redBtn: {
     width: '100%',
     height: 48,
@@ -367,6 +399,10 @@ const styles = StyleSheet.create({
   btnTxt: {
     ...FONTS.btn,
     color: COLORS.white,
+  },
+  googleBtnTxt: {
+    ...FONTS.btn,
+    color: COLORS.black,
   },
   textInput: {
     justifyContent: 'center',

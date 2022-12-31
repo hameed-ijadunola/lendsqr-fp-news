@@ -26,6 +26,8 @@ import AppLoading from 'expo-app-loading';
 import SignOutSvg from '../../../assets/images/sign-out.svg';
 import {saveCredentials} from '../../../redux/features/authSlice';
 import {useDispatch} from 'react-redux';
+import auth from '@react-native-firebase/auth';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 export const FormattedParagraph = ({text, type, noLine}) => {
   return type == 'body' ? (
@@ -108,8 +110,13 @@ const About = ({navigation}) => {
             </TouchableOpacity>
             <Text style={styles.title}>About me</Text>
           </View>
-          <TouchableOpacity onPress={() => dispatch(saveCredentials(null))}>
-            <SignOutSvg />
+          <TouchableOpacity
+            style={{flexDirection: 'row'}}
+            onPress={() => {
+              auth().signOut();
+            }}>
+            <Text style={styles.title}>Log out</Text>
+            <SignOutSvg marginLeft={5} />
           </TouchableOpacity>
         </View>
 
@@ -198,5 +205,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 24,
     fontFamily: 'Poppins_400Regular',
+  },
+  redtext: {
+    color: COLORS.white,
+    fontSize: 14,
+    lineHeight: 24,
+    fontFamily: 'Poppins_400Regular',
+  },
+  redBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+    backgroundColor: COLORS.red,
+  },
+  crash: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });

@@ -1,3 +1,4 @@
+import 'expo-dev-client';
 import 'react-native-gesture-handler';
 import React, {useCallback, useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
@@ -17,17 +18,24 @@ import {persistStore} from 'redux-persist';
 import {PersistGate} from 'redux-persist/integration/react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
-import * as SQLite from 'expo-sqlite';
-const db = SQLite.openDatabase('UserDatabase.db');
 const Stack = createStackNavigator();
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 export default function App({navigation}) {
+  GoogleSignin.configure({
+    webClientId:
+      '247747714243-9ua5jl449elerqdc5tdnqs7cb7q9uf4p.apps.googleusercontent.com',
+  });
+
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState('RootStack');
   let persistor = persistStore(store);
 
   useEffect(() => {
     async function prepare() {
+      crashlytics().log('Setting up app resources.');
       try {
         await SplashScreen.preventAutoHideAsync();
         // Pre-load fonts, make any API calls you need to do here
@@ -36,14 +44,11 @@ export default function App({navigation}) {
           Poppins_500Medium,
           Poppins_600SemiBold,
         });
-        db.transaction(tx => {
-          tx.executeSql(
-            'CREATE TABLE IF NOT EXISTS table_user (id INTEGER PRIMARY KEY AUTOINCREMENT, user_name TEXT, user_email TEXT, user_password TEXT)',
-          );
-        });
       } catch (e) {
+        crashlytics().recordError(e);
         console.warn(e);
       } finally {
+        crashlytics().log('App mounted.');
         setAppIsReady(true);
       }
     }

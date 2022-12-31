@@ -12,13 +12,13 @@ import {combineReducers} from 'redux';
 import {configureStore} from '@reduxjs/toolkit';
 import authSlice from './features/authSlice';
 import newsSlice from './features/newsSlice';
-import {newsApi} from './features/newsApi';
 import {setupListeners} from '@reduxjs/toolkit/dist/query';
+import {newsApi2} from './features/newsApi2';
 
 const rootReducer = combineReducers({
   userAuth: authSlice,
   newsFeed: newsSlice,
-  [newsApi.reducerPath]: newsApi.reducer,
+  [newsApi2.reducerPath]: newsApi2.reducer,
 });
 
 const persistConfig = {
@@ -36,7 +36,7 @@ export const store = configureStore({
     getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat(newsApi.middleware),
+    }).concat(newsApi2.middleware),
 });
 
 setupListeners(store.dispatch);

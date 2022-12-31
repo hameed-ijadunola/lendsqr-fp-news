@@ -39,25 +39,12 @@ import {
 } from '../../../helpers/validation/validation';
 import {useFocusEffect} from '@react-navigation/native';
 import {useToast} from 'react-native-toast-notifications';
-import * as SQLite from 'expo-sqlite';
 import {saveCredentials} from '../../../redux/features/authSlice';
 import {useDispatch} from 'react-redux';
-
-function openDatabase() {
-  if (Platform.OS === 'web') {
-    return {
-      transaction: () => {
-        return {
-          executeSql: () => {},
-        };
-      },
-    };
-  }
-
-  const db = SQLite.openDatabase('UserDatabase.db');
-  return db;
-}
-const db = openDatabase();
+import auth from '@react-native-firebase/auth';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import GoogleSvg from '../../../assets/images/google.svg';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const SignIn = ({navigation}) => {
   const toast = useToast();
@@ -76,7 +63,6 @@ const SignIn = ({navigation}) => {
     password: null,
   });
 
-  ///handle back action
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -90,50 +76,34 @@ const SignIn = ({navigation}) => {
         ]);
         return true;
       };
-
-      // Add Event Listener for hardwareBackPress
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
       return () => {
-        // Once the Screen gets blur Remove Event Listener
         BackHandler.removeEventListener('hardwareBackPress', onBackPress);
       };
     }, []),
   );
+
   async function onSubmit() {
-    try {
-      setLoading(true);
-      const emailError = validateEmail(state.email);
-      const passwordError = null;
-      if (emailError || passwordError) {
-        setError({...error, email: emailError, password: passwordError});
+    setLoading(true);
+    await GoogleSignin.hasPlayServices({
+      showPlayServicesUpdateDialog: true,
+    });
+    const {idToken} = await GoogleSignin.signIn();
+
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    const user_sign_in = auth().signInWithCredential(googleCredential);
+    user_sign_in
+      .then(user => {
         setLoading(false);
-        return;
-      } else {
-        setError({email: null, password: null});
-        db.transaction(tx => {
-          tx.executeSql(
-            `SELECT * FROM table_user WHERE user_email = ? AND user_password = ?`,
-            [state.email, state.password],
-            (tx, results) => {
-              var len = results.rows.length;
-              console.log('len', len);
-              if (len > 0) {
-                console.log(results.rows.item(0));
-                dispatch(saveCredentials(results.rows.item(0)));
-              } else {
-                toast.hideAll();
-                toast.show('Wrong username/password');
-              }
-            },
-          );
+      })
+      .catch(err => {
+        crashlytics().recordError(err);
+        toast.show('Signin failed', {
+          placement: 'bottom',
+          duration: 5000,
         });
-      }
-      setLoading(false);
-    } catch (error) {
-      console.log('error in screens/SignIn ln:117', error);
-      setLoading(false);
-    }
+        setLoading(false);
+      });
   }
 
   let [fontsLoaded] = useFonts({
@@ -150,7 +120,7 @@ const SignIn = ({navigation}) => {
   }
 
   return (
-    <>
+    <View style={{backgroundColor: COLORS.white, flex: 1}}>
       <StatusBar style='dark' />
       <View
         style={{
@@ -159,7 +129,9 @@ const SignIn = ({navigation}) => {
           top: 60,
           zIndex: 1,
         }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{padding: 5}}
+          onPress={() => navigation.goBack()}>
           <MaterialCommunityIcons
             name='keyboard-backspace'
             size={24}
@@ -168,76 +140,60 @@ const SignIn = ({navigation}) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{backgroundColor: COLORS.white}}>
-        <View style={styles.safeArea}>
+      <View style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          showsVerticalScrollIndicator={false}>
           <View
             style={{
               marginTop: 70,
+              flex: 1,
             }}>
             <Text style={styles.title}>{'Welcome\nBack'}</Text>
             <Text style={styles.desc}>
-              Enter your email address and password to continue
+              Login in with your registered Google account
             </Text>
 
-            <KeyboardAvoidingWrapper>
-              <View>
-                <MyTextInput
-                  label='Email'
-                  placeholder='Enter email'
-                  placeholderTextColor={COLORS.placeholderTxt}
-                  onChangeText={text => setState({...state, email: text})}
-                  value={state.email}
-                />
-                {error.email !== null && (
-                  <Text style={styles.errorText}>{error.email}</Text>
+            <View style={styles.bottomBtn}>
+              <TouchableOpacity
+                style={
+                  !loading
+                    ? Platform.OS === 'ios'
+                      ? [styles.googleBtnIos]
+                      : [styles.googleBtnAndr]
+                    : [styles.grayBtn]
+                }
+                onPress={onSubmit}>
+                {!loading ? (
+                  <>
+                    <GoogleSvg width={25} height={25} marginRight={15} />
+                    <Text style={styles.googleBtnTxt}>Sign in</Text>
+                  </>
+                ) : (
+                  <ActivityIndicator size='small' color={COLORS.white} />
                 )}
+              </TouchableOpacity>
 
-                <MyTextInput
-                  label='Password'
-                  placeholder='Enter password'
-                  placeholderTextColor={COLORS.placeholderTxt}
-                  onChangeText={text => setState({...state, password: text})}
-                  value={state.password}
-                  secureTextEntry={hidePassword}
-                  isPassword={true}
-                  hidePassword={hidePassword}
-                  setHidePassword={setHidePassword}
-                />
-                {error.password !== null && (
-                  <Text style={styles.errorText}>{error.password}</Text>
-                )}
-
+              <View style={{flexDirection: 'row', marginBottom: 20}}>
+                <Text style={styles.desc}>Don't have an account? </Text>
                 <TouchableOpacity
-                  style={!loading ? [styles.redBtn] : [styles.grayBtn]}
-                  disabled={loading}
-                  onPress={onSubmit}>
-                  {!loading ? (
-                    <Text style={styles.btnTxt}>Sign in</Text>
-                  ) : (
-                    <ActivityIndicator size='small' color={COLORS.white} />
-                  )}
+                  onPress={() => {
+                    navigation.navigate('SignUp');
+                  }}>
+                  <Text style={styles.linkTxt}>Sign up</Text>
                 </TouchableOpacity>
               </View>
-            </KeyboardAvoidingWrapper>
+            </View>
             {/* <TouchableOpacity
               onPress={() => {
                 navigation.navigate('ForgotPassword');
               }}>
               <Text style={styles.desc}>Forgot password?</Text>
             </TouchableOpacity> */}
-            <View style={{flexDirection: 'row'}}>
-              <Text style={styles.desc}>Don't have an account? </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('SignUp');
-                }}>
-                <Text style={styles.linkTxt}>Sign up</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </View>
-      </ScrollView>
-    </>
+        </ScrollView>
+      </View>
+    </View>
   );
 };
 
@@ -272,6 +228,13 @@ const MyTextInput = ({
 const styles = StyleSheet.create({
   txt: {
     fontSize: 40,
+  },
+  bottomBtn: {
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    bottom: 0,
+    flexGrow: 1,
+    backgroundColor: COLORS.white,
   },
   center: {
     justifyContent: 'center',
@@ -312,15 +275,39 @@ const styles = StyleSheet.create({
   backIcon: {
     marginBottom: 30,
   },
-  redBtn: {
+  googleBtnIos: {
     width: '100%',
     height: 48,
+    borderWidth: 2,
+    borderRadius: 5,
+    borderColor: '#dddddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginVertical: 24,
+    flexDirection: 'row',
+    shadowColor: '#171717',
+    shadowOffset: {width: -2, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  googleBtnAndr: {
+    width: '100%',
+    height: 48,
+    borderWidth: 1,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.red,
+    backgroundColor: COLORS.white,
     marginVertical: 24,
     flexDirection: 'row',
+    borderColor: '#dddddd',
+    shadowColor: 'rgba(0,0,0,10)',
+    elevation: 3,
+  },
+  googleBtnTxt: {
+    ...FONTS.btn,
+    color: COLORS.black,
   },
   grayBtn: {
     width: '100%',
