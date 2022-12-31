@@ -26,7 +26,6 @@ import {WebView} from 'react-native-webview';
 
 const NewsDetails = ({navigation, route}) => {
   const params = route.params;
-  console.log(params);
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,

@@ -39,7 +39,6 @@ import {
 } from '../../../helpers/validation/validation';
 import {useFocusEffect} from '@react-navigation/native';
 import {useToast} from 'react-native-toast-notifications';
-import {saveCredentials} from '../../../redux/features/authSlice';
 import {useDispatch} from 'react-redux';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';

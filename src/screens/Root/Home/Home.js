@@ -33,7 +33,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useToast} from 'react-native-toast-notifications';
 import {useFocusEffect} from '@react-navigation/native';
 import moment from 'moment';
-import {useGetLatestHeadlinesMutation} from '../../../redux/features/newsApi2';
+import {useGetLatestHeadlinesMutation} from '../../../redux/features/newsApi';
 import crashlytics from '@react-native-firebase/crashlytics';
 
 const Home = ({navigation}) => {
@@ -46,26 +46,6 @@ const Home = ({navigation}) => {
   const [getLatestHeadlines, {isLoading: isGettingLatestHeadlines}] =
     useGetLatestHeadlinesMutation();
 
-  const fetchDetails = async arrIds => {
-    let result = [];
-    for (let i = 0; i < arrIds.length; i++) {
-      const id = arrIds[i];
-      const det = await getNewsDetails(id);
-      if (det?.data) {
-        result.push(det?.data);
-      }
-    }
-    dispatch(setNewsFeed(result));
-  };
-
-  const fetchNewsBySearch = async () => {
-    const res = await getNewsBySearch({
-      q: 'Technology',
-      page: 1,
-      page_size: 10000,
-    });
-    console.log(res);
-  };
   const fetchLatestHeadlines = async () => {
     const res = await getLatestHeadlines({
       page: 1,
@@ -73,7 +53,6 @@ const Home = ({navigation}) => {
     });
     if (res?.data) {
       dispatch(setNewsFeed(res?.data?.articles));
-      console.log(res?.data?.articles);
       return;
     }
     crashlytics().log(res?.error?.data?.message);
@@ -111,7 +90,6 @@ const Home = ({navigation}) => {
 
   useEffect(() => {
     fetchLatestHeadlines();
-    console.log(range);
   }, [range, refetch]);
 
   let [fontsLoaded] = useFonts({

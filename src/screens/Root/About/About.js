@@ -24,10 +24,8 @@ import {
 } from '@expo-google-fonts/montserrat';
 import AppLoading from 'expo-app-loading';
 import SignOutSvg from '../../../assets/images/sign-out.svg';
-import {saveCredentials} from '../../../redux/features/authSlice';
 import {useDispatch} from 'react-redux';
 import auth from '@react-native-firebase/auth';
-import crashlytics from '@react-native-firebase/crashlytics';
 
 export const FormattedParagraph = ({text, type, noLine}) => {
   return type == 'body' ? (

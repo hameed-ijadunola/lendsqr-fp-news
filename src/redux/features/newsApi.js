@@ -1,46 +1,33 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-const baseUrl = 'https://hacker-news.firebaseio.com/v0/';
+const baseUrl = 'https://api.newscatcherapi.com/v2/';
 export const newsApi = createApi({
   reducerPath: 'newsApi',
   baseQuery: fetchBaseQuery({
     baseUrl,
+    headers: {
+      'x-api-key': 'eS51Jikz9N7sbkGyrbTW8dRq1z2PdWDWs0nEEhcHbkk',
+    },
   }),
   endpoints: builder => ({
-    getLatestHeadlines: builder.query({
-      query: args => {
+    getNewsBySearch: builder.mutation({
+      query: ({q, page, page_size}) => {
         return {
-          url: 'topstories.json',
-        };
-      },
-    }),
-    getTopStoriesIds: builder.query({
-      query: args => {
-        return {
-          url: 'topstories.json',
-        };
-      },
-    }),
-    getTopStories: builder.mutation({
-      query: args => {
-        return {
-          url: 'topstories.json',
+          url: 'search',
+          params: {q, lang: 'en', sort_by: 'relevancy', page, page_size},
           method: 'GET',
         };
       },
     }),
-    getNewsDetails: builder.mutation({
-      query: id => {
+    getLatestHeadlines: builder.mutation({
+      query: ({page, page_size}) => {
         return {
-          url: `item/${id}.json`,
-          method: 'GET',
+          url: 'latest_headlines',
+          params: {lang: 'en', when: '14d', page, page_size},
         };
       },
     }),
   }),
 });
 
-export const {
-  useGetTopStoriesIdsQuery,
-  useGetTopStoriesMutation,
-  useGetNewsDetailsMutation,
-} = newsApi;
+export const {useGetNewsBySearchMutation, useGetLatestHeadlinesMutation} =
+  newsApi;

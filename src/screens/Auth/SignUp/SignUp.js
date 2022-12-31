@@ -43,7 +43,6 @@ import {
 } from '../../../helpers/validation/validation';
 import {useToast} from 'react-native-toast-notifications';
 import {useDispatch} from 'react-redux';
-import {saveCredentials} from '../../../redux/features/authSlice';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import GoogleSvg from '../../../assets/images/google.svg';
@@ -125,12 +124,10 @@ const SignUp = ({navigation}) => {
     const user_sign_in = auth().signInWithCredential(googleCredential);
     user_sign_in
       .then(user => {
-        console.log(user);
         setLoading(false);
       })
       .catch(err => {
         crashlytics().recordError(err);
-        console.log(err);
         setLoading(false);
       });
     return auth().signInWithCredential(googleCredential);
