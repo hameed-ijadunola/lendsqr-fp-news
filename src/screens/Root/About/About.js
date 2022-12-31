@@ -26,6 +26,7 @@ import AppLoading from 'expo-app-loading';
 import SignOutSvg from '../../../assets/images/sign-out.svg';
 import {useDispatch} from 'react-redux';
 import auth from '@react-native-firebase/auth';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 export const FormattedParagraph = ({text, type, noLine}) => {
   return type == 'body' ? (
@@ -111,6 +112,7 @@ const About = ({navigation}) => {
           <TouchableOpacity
             style={{flexDirection: 'row'}}
             onPress={() => {
+              GoogleSignin.signOut();
               auth().signOut();
             }}>
             <Text style={styles.title}>Log out</Text>

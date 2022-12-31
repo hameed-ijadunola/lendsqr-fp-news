@@ -67,8 +67,6 @@ const SignUp = ({navigation}) => {
     phonenumber: null,
   });
 
-  ///handle back action
-
   const onSubmit = async () => {
     try {
       if (page === 1) {
@@ -84,8 +82,8 @@ const SignUp = ({navigation}) => {
             email: emailError,
             phonenumber: phoneNumberError,
           });
-          toast.show('Enter correct details', {
-            placement: 'bottom',
+          toast.show('Enter required details', {
+            placement: 'top',
             duration: 5000,
           });
           setLoading(false);
@@ -97,6 +95,7 @@ const SignUp = ({navigation}) => {
             email: null,
             phonenumber: null,
           });
+          GoogleSignin.signOut();
           setPage(2);
           setLoading(false);
         }
@@ -106,7 +105,7 @@ const SignUp = ({navigation}) => {
     } catch (error) {
       crashlytics().recordError(error);
       toast.show('Sign up failed', {
-        placement: 'bottom',
+        placement: 'top',
         duration: 5000,
       });
       setLoading(false);
@@ -116,6 +115,7 @@ const SignUp = ({navigation}) => {
 
   const onGoogleButtonPress = async () => {
     setLoading(true);
+    await GoogleSignin.signOut();
     await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
     const {idToken} = await GoogleSignin.signIn();
 
@@ -221,28 +221,22 @@ const SignUp = ({navigation}) => {
           <View style={styles.bottomBtn}>
             <TouchableOpacity
               style={
-                !loading
-                  ? page === 1
-                    ? [styles.redBtn]
-                    : Platform.OS === 'ios'
-                    ? [styles.googleBtnIos]
-                    : [styles.googleBtnAndr]
-                  : [styles.grayBtn]
+                page === 1
+                  ? [styles.redBtn]
+                  : Platform.OS === 'ios'
+                  ? [styles.googleBtnIos]
+                  : [styles.googleBtnAndr]
               }
               onPress={onSubmit}>
-              {!loading ? (
-                <>
-                  {page === 2 && (
-                    <GoogleSvg width={25} height={25} marginRight={15} />
-                  )}
-                  <Text
-                    style={page === 1 ? styles.btnTxt : styles.googleBtnTxt}>
-                    {page === 1 ? 'Continue' : 'Complete Sign up'}
-                  </Text>
-                </>
-              ) : (
-                <ActivityIndicator size='small' color={COLORS.white} />
-              )}
+              <>
+                {page === 2 && (
+                  <GoogleSvg width={25} height={25} marginRight={15} />
+                )}
+                {page === 1 && <Text style={styles.btnTxt}>Continue</Text>}
+                {page === 2 && (
+                  <Text style={styles.googleBtnTxt}>Complete Sign up</Text>
+                )}
+              </>
             </TouchableOpacity>
 
             <View

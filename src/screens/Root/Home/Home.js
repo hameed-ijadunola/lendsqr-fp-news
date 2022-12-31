@@ -41,12 +41,13 @@ const Home = ({navigation}) => {
   const toast = useToast();
   const {newsFeed} = useSelector(state => state.newsFeed);
   const [range, setRange] = useState({no1: 0, no2: 100});
-  const [refreshing, setRefreshing] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [refetch, setRefetch] = useState(true);
   const [getLatestHeadlines, {isLoading: isGettingLatestHeadlines}] =
     useGetLatestHeadlinesMutation();
 
   const fetchLatestHeadlines = async () => {
+    setRefreshing(true);
     const res = await getLatestHeadlines({
       page: 1,
       page_size: range.no2,
