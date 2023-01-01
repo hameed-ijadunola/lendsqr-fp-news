@@ -47,7 +47,7 @@ Since this project makes use of custom native code which is not currently suppor
 
 1. Fork it (<https://github.com/hameed-ijadunola/lendsqr-fp-news/fork>)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -am 'Add some fooBar'`)
+3. Commit your changes (`git commit -m 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
 5. Create a new Pull Request
 
