@@ -10,28 +10,29 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-Please set up [Expo CLI](https://docs.expo.dev/get-started/installation/) if you have not already done so.
-Since this project makes use of custom native code which is not currently supported on Expo Go, use [development builds](https://docs.expo.dev/development/introduction/#what-is-a-development-build) or explore other options [here](https://docs.expo.dev/workflow/customizing/#adding-custom-native-code-with-development-builds)
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-### Installing(using expo-dev-client)
+> **Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+
+### Installing
 
 1. Clone Repository
-2. `cd react-native-news-app`
+2. `cd lendsqr-fp-news`
 3. `yarn install`
-4. `eas build --profile development --platform android`
-5. `npx expo start --dev-client`
+4. `yarn start`
+5. `yarn run android`
 
 ## Built With
 
 - [react native](https://github.com/facebook/react-native)
-- [firebase](https://firebase.google.com)
+- [firebase and its numerous sdks](https://firebase.google.com)
 - [redux-toolkit](https://redux-toolkit.js.org)
 - [rtk-query](https://redux-toolkit.js.org/rtk-query/overview)
 - [redux-persist](https://github.com/rt2zz/redux-persist)
-- [expo](https://expo.dev/)
+- [codepush(AppCenter)](https://appcenter.ms/)
 - [react-navigation](https://github.com/react-navigation/react-navigation)
-- [newscatcherapi](https://newscatcherapi.com)
-- other stuff...
+- [newsapi](https://newsapi.org/)
+- and more...
 
 ## Authors
 
