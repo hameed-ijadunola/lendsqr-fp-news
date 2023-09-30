@@ -55,7 +55,6 @@ const Home = () => {
       page: 1,
       pageSize: range.no2,
     });
-    console.log('res', res);
     if (res?.data) {
       dispatch(setNewsFeed(res?.data?.articles));
       setRefreshing(false);

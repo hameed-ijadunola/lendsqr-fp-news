@@ -93,13 +93,11 @@ const SignIn = ({ navigation }) => {
         .where('email', '==', email)
         .get();
       if (!snapshot.empty) {
-        console.log('snapshot.docs[0]', snapshot.docs[0].data());
         return { exists: true, document: snapshot.docs[0].data() };
       } else {
         return { exists: false, document: null };
       }
     } catch (error) {
-      console.error('Error checking email existence:', error);
       toast.show('Network error', {
         placement: 'top',
         duration: 5000,
@@ -116,16 +114,12 @@ const SignIn = ({ navigation }) => {
       });
       const authInfo = await GoogleSignin.signIn();
       const { idToken } = authInfo;
-      console.log('idToken', authInfo);
       const emailExists = await checkIfEmailExists(authInfo?.user?.email);
-      console.log('emailExists', emailExists);
       if (emailExists.exists) {
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-        console.log('googleCredential', googleCredential);
         const user_sign_in = auth().signInWithCredential(googleCredential);
         user_sign_in
           .then((user) => {
-            console.log('user', emailExists?.document);
             setLoading(false);
             dispatch(saveUser(emailExists?.document));
             dispatch(saveToken(googleCredential.token));
@@ -136,7 +130,6 @@ const SignIn = ({ navigation }) => {
             });
           })
           .catch((err) => {
-            console.log('err\n\n', err);
             setLoading(false);
             dispatch(saveUser(null));
             dispatch(saveToken(null));
@@ -148,7 +141,6 @@ const SignIn = ({ navigation }) => {
             });
           });
       } else {
-        console.log('emailExists.exists', emailExists.exists);
         toast.show(
           'This email is not registered, Please proceed to\n sign up instead',
           {
@@ -160,7 +152,6 @@ const SignIn = ({ navigation }) => {
         return;
       }
     } catch (error) {
-      console.log('error', error);
       setLoading(false);
     }
   }

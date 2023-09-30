@@ -97,7 +97,6 @@ const SignUp = ({ navigation }) => {
 
       return !snapshot.empty;
     } catch (error) {
-      console.error('Error checking email existence:', error);
       toast.show('Network error', {
         placement: 'top',
         duration: 5000,
@@ -108,14 +107,6 @@ const SignUp = ({ navigation }) => {
 
   const saveUserToFirestore = async ({ user, data }) => {
     try {
-      console.log('saveuser', {
-        fullName: data?.fullName,
-        email: data?.email,
-        phoneNumber: data?.phone,
-        photoURL: user?.photoURL,
-        additionalInfo: user,
-      });
-
       const userRef = firestore().collection('users').doc(user.uid);
       const userData = {
         fullName: data?.fullName,
@@ -134,7 +125,6 @@ const SignUp = ({ navigation }) => {
 
       return newUser;
     } catch (error) {
-      console.error('Error saving user to Firestore:', error);
       setLoading(false);
     }
   };
@@ -144,9 +134,7 @@ const SignUp = ({ navigation }) => {
       if (page === 1) {
         setLoading(true);
         const emailExists = await checkIfEmailExists(val?.email);
-        console.log('emailExists', emailExists);
         if (emailExists) {
-          console.log('Email already exists');
           toast.show(
             'This email is already registered, Please proceed to\n sign in instead',
             {
@@ -182,7 +170,6 @@ const SignUp = ({ navigation }) => {
         showPlayServicesUpdateDialog: true,
       });
       const { idToken, user } = await GoogleSignin.signIn();
-      console.log('idToken', idToken, user.email, data);
       if (user.email !== data?.email) {
         setLoading(false);
         toast.show(
@@ -195,12 +182,9 @@ const SignUp = ({ navigation }) => {
         return;
       }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      console.log('googleCredential', googleCredential);
       const user_sign_in = auth().signInWithCredential(googleCredential);
       user_sign_in
         .then(async (user) => {
-          console.log('user', user);
-
           const newUser = await saveUserToFirestore({ user: user?.user, data });
           if (!newUser) {
             setLoading(false);
@@ -220,7 +204,6 @@ const SignUp = ({ navigation }) => {
           });
         })
         .catch((err) => {
-          console.log('err\n\n', err);
           setLoading(false);
           dispatch(saveUser(null));
           dispatch(saveToken(null));
@@ -232,7 +215,6 @@ const SignUp = ({ navigation }) => {
           });
         });
     } catch (error) {
-      console.log('error', error, error?.message);
       toast.show(
         (error?.message !== 'Sign in action cancelled'
           ? error?.message

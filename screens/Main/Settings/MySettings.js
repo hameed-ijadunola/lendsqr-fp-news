@@ -40,7 +40,6 @@ const MySettings = () => {
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
   const { user } = useSelector((state) => state.userAuth);
-  console.log('user', user);
   const dispatch = useDispatch();
 
   const Logout = ({ item }) => (
