@@ -1776,6 +1776,21 @@
     prompts "^2.4.0"
     semver "^7.5.2"
 
+"@react-native-firebase/analytics@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/analytics/-/analytics-18.5.0.tgz#cca5858e44f3f8cbf387fa7cd6debb95fbcf8023"
+  integrity sha512-+8fkDedcftieOBEkNdqEW0lS/FB9SKzfUc3yYXnJcLTy3Ceg9JZga/tWz4BGbbxPddUy1Sm2UuWDuOxsdkFUyA==
+
+"@react-native-firebase/app-check@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/app-check/-/app-check-18.5.0.tgz#a0a20c1fb2ad5c76aee699d4e40b64f4c7812b6b"
+  integrity sha512-CUy9Ix2yrh3zxK3Dgcq6ZETLebMqcDC82iQJ4MkFiG9j6Ga1kTNl1VRDuirdiRSiwtu+XhRHHSD3X6esTEjPvQ==
+
+"@react-native-firebase/app-distribution@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/app-distribution/-/app-distribution-18.5.0.tgz#5676559e27d5a0194f5343caa07ec87728db0c71"
+  integrity sha512-RH+ugylYT//cgsxKL5g/S3nZlYmSay5hHqSzp5rA500BZBiW4NnV5xf0313yePlBX1BNdXiLhVAB/qBlGPKc0w==
+
 "@react-native-firebase/app@^18.5.0":
   version "18.5.0"
   resolved "https://registry.yarnpkg.com/@react-native-firebase/app/-/app-18.5.0.tgz#198a133229d1b8710f257e76d9703dcb7e4cd6e0"
@@ -1798,10 +1813,20 @@
   dependencies:
     stacktrace-js "^2.0.0"
 
+"@react-native-firebase/firestore@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/firestore/-/firestore-18.5.0.tgz#dbbcc0c29ac70b37277f8c4bc3a4ff241bfea381"
+  integrity sha512-/LiCWjuB4YuPvxHz2H6Nu/dY3zjeIjLfzvMWAuHRb10UtRUxaFlgrIgWioR6plwv8JHrgZBNdnZCyc+sVxEqRg==
+
 "@react-native-firebase/perf@^18.5.0":
   version "18.5.0"
   resolved "https://registry.yarnpkg.com/@react-native-firebase/perf/-/perf-18.5.0.tgz#23e9a6595ae8fef00230373163866e0dd2b71952"
   integrity sha512-XeBCJVPeVHbVMJ3rqHwX0mqhXprSEEVBW+pBlCgTYZSK2UnVNrX4IvCqowOJhDOWtte4ZHB05fde0tXSytEimg==
+
+"@react-native-firebase/remote-config@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/remote-config/-/remote-config-18.5.0.tgz#5ece65cdd2b2c2179b6be409287f3b837ef39824"
+  integrity sha512-EOXToa1tLtskWjCAjW9RZHB19BHk8+MiLLS4B2DSAHs/t6QVRtjlK+xqI2nSppHSFdzMI6Nd9wi869baK/y5RA==
 
 "@react-native-google-signin/google-signin@^10.0.1":
   version "10.0.1"
