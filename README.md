@@ -1,79 +1,55 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+## Project Description
 
-# Getting Started
+This is a cross-platform mobile application lets you see the latest news headlines provided by [Free News API](https://newsapi.org/).
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+This app is an Offline/Online app integrated with Google Signin, Firebase(Authentication, Crashlytics, App distribution and Performance) and more.
 
-## Step 1: Start the Metro Server
+## Getting started
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-To start Metro, run the following command from the _root_ of your React Native project:
+### Prerequisites
 
-```bash
-# using npm
-npm start
+Please set up [Expo CLI](https://docs.expo.dev/get-started/installation/) if you have not already done so.
+Since this project makes use of custom native code which is not currently supported on Expo Go, use [development builds](https://docs.expo.dev/development/introduction/#what-is-a-development-build) or explore other options [here](https://docs.expo.dev/workflow/customizing/#adding-custom-native-code-with-development-builds)
 
-# OR using Yarn
-yarn start
-```
+### Installing(using expo-dev-client)
 
-## Step 2: Start your Application
+1. Clone Repository
+2. `cd react-native-news-app`
+3. `yarn install`
+4. `eas build --profile development --platform android`
+5. `npx expo start --dev-client`
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+## Built With
 
-### For Android
+- [react native](https://github.com/facebook/react-native)
+- [firebase](https://firebase.google.com)
+- [redux-toolkit](https://redux-toolkit.js.org)
+- [rtk-query](https://redux-toolkit.js.org/rtk-query/overview)
+- [redux-persist](https://github.com/rt2zz/redux-persist)
+- [expo](https://expo.dev/)
+- [react-navigation](https://github.com/react-navigation/react-navigation)
+- [newscatcherapi](https://newscatcherapi.com)
+- other stuff...
 
-```bash
-# using npm
-npm run android
+## Authors
 
-# OR using Yarn
-yarn android
-```
+- **Hameed Ijadunola** - [hameed-ijadunola](https://github.com/hameed-ijadunola)
 
-### For iOS
+## Contributing
 
-```bash
-# using npm
-npm run ios
+1. Fork it (<https://github.com/hameed-ijadunola/lendsqr-fp-news/fork>)
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Commit your changes (`git commit -m 'Add some fooBar'`)
+4. Push to the branch (`git push origin feature/fooBar`)
+5. Create a new Pull Request
 
-# OR using Yarn
-yarn ios
-```
+## Improve
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+Feedback is more than appreciated.
+You are allowed to use this app for both personal and commercial use, but not claim it as your own. A credit to the original author is of course highly appreciated!
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+## License
 
-## Step 3: Modifying your App
-
-Now that you have successfully run the app, let's modify it.
-
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+This project is licensed under the MIT License.
