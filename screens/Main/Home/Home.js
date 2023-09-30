@@ -36,6 +36,7 @@ import { useGetLatestHeadlinesMutation } from '../../../redux/features/newsApi';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { setNewsFeed } from '../../../redux/features/newsSlice';
 import moment from 'moment';
+import analytics from '@react-native-firebase/analytics';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -72,13 +73,21 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        Alert.alert('Exit QC News!', 'Are you sure you want to exit?', [
+        Alert.alert('Exit FP News!', 'Are you sure you want to exit?', [
           {
             text: 'No',
             onPress: () => null,
             style: 'cancel',
           },
-          { text: 'Yes', onPress: () => BackHandler.exitApp() },
+          {
+            text: 'Yes',
+            onPress: async () => {
+              BackHandler.exitApp();
+              await analytics().logEvent('app_exited', {
+                timeStamp: new Date().toISOString(),
+              });
+            },
+          },
         ]);
         return true;
       };
@@ -104,17 +113,12 @@ const Home = () => {
       }}
     >
       <Col style={{ flexGrow: 1 }}>
-        <Row marginBottom={16} paddingHorizontal={16} justify="flex-start">
+        <Row marginBottom={16} paddingHorizontal={16}>
           <Pressable
             style={{
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            onPress={() =>
-              navigation.navigate('MainStack', {
-                screen: 'NewsPage',
-              })
-            }
           >
             <CustomText
               color={COLORS.primarytext}
@@ -125,6 +129,13 @@ const Home = () => {
               {`News Headlines`}
             </CustomText>
           </Pressable>
+          <Button
+            width={'80px'}
+            height={40}
+            bgColor={COLORS.error}
+            text="Crash"
+            onPress={() => crashlytics().crash()}
+          />
         </Row>
         <Row marginBottom={16} paddingHorizontal={16} justify="flex-start">
           <FlatList

@@ -33,6 +33,7 @@ import GoogleSvg from '../../../assets/svgs/google.svg';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { saveToken, saveUser } from '../../../redux/features/auth/authSlice';
 import firestore from '@react-native-firebase/firestore';
+import analytics from '@react-native-firebase/analytics';
 
 GoogleSignin.configure({
   webClientId:
@@ -42,23 +43,12 @@ GoogleSignin.configure({
 const SignIn = ({ navigation }) => {
   const toast = useToast();
   const dispatch = useDispatch();
-  const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [toastMssg, setToastMssg] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
-  const [state, setState] = useState({
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState({
-    email: null,
-    password: null,
-  });
 
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        Alert.alert('Exit QC News!', 'Are you sure you want to exit?', [
+        Alert.alert('Exit FP News!', 'Are you sure you want to exit?', [
           {
             text: 'No',
             onPress: () => null,
@@ -119,22 +109,28 @@ const SignIn = ({ navigation }) => {
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);
         const user_sign_in = auth().signInWithCredential(googleCredential);
         user_sign_in
-          .then((user) => {
+          .then(async (user) => {
             setLoading(false);
             dispatch(saveUser(emailExists?.document));
             dispatch(saveToken(googleCredential.token));
+            await analytics().logEvent('app_signed_in', {
+              timeStamp: new Date().toISOString(),
+            });
             toast.show('Signed in successfully', {
               placement: 'bottom',
               duration: 5000,
               backgroundColor: COLORS.green,
             });
           })
-          .catch((err) => {
+          .catch(async (err) => {
             setLoading(false);
             dispatch(saveUser(null));
             dispatch(saveToken(null));
             GoogleSignin.revokeAccess();
             crashlytics().recordError(err);
+            await analytics().logEvent('app_sign_in_failed', {
+              timeStamp: new Date().toISOString(),
+            });
             toast.show('Signin failed', {
               placement: 'bottom',
               duration: 5000,

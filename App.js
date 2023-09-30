@@ -19,9 +19,16 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { ToastProvider } from 'react-native-toast-notifications';
 import { COLORS } from './constants/colors';
 import { View, Text } from 'react-native';
+import SplashScreen from 'react-native-splash-screen';
 
 const App = () => {
   let persistor = persistStore(store);
+
+  React.useEffect(() => {
+    setTimeout(() => {
+      SplashScreen.hide();
+    }, 3000);
+  }, []);
 
   const Toast = (props) => {
     return (

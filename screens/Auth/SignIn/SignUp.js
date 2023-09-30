@@ -34,6 +34,7 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { saveToken, saveUser } from '../../../redux/features/auth/authSlice';
 import firestore from '@react-native-firebase/firestore';
 import BackSvg from '../../../assets/svgs/Back.svg';
+import analytics from '@react-native-firebase/analytics';
 
 GoogleSignin.configure({
   webClientId:
@@ -87,6 +88,13 @@ const SignUp = ({ navigation }) => {
       onSubmitHandler(resolveValues);
     },
   });
+
+  const crashReport = async (error) => {
+    crashlytics().recordError(error);
+    await analytics().logEvent('app_sign_up_failed', {
+      timeStamp: new Date().toISOString(),
+    });
+  };
 
   const checkIfEmailExists = async (email) => {
     try {
@@ -151,14 +159,16 @@ const SignUp = ({ navigation }) => {
       } else if (page === 2) {
         onGoogleButtonPress(val);
       }
-    } catch (error) {
-      crashlytics().recordError(error);
-      toast.show('Sign up failed', {
-        placement: 'top',
-        duration: 5000,
-      });
-      setLoading(false);
-      return false;
+    } catch {
+      async (error) => {
+        await crashReport(error);
+        toast.show('Sign up failed', {
+          placement: 'top',
+          duration: 5000,
+        });
+        setLoading(false);
+        return false;
+      };
     }
   };
 
@@ -188,6 +198,7 @@ const SignUp = ({ navigation }) => {
           const newUser = await saveUserToFirestore({ user: user?.user, data });
           if (!newUser) {
             setLoading(false);
+            await crashReport('Failed to save user to firestore');
             toast.show('Sign up failed unexpectedly', {
               placement: 'top',
               duration: 5000,
@@ -203,28 +214,31 @@ const SignUp = ({ navigation }) => {
             backgroundColor: COLORS.green,
           });
         })
-        .catch((err) => {
+        .catch(async (err) => {
           setLoading(false);
           dispatch(saveUser(null));
           dispatch(saveToken(null));
           GoogleSignin.revokeAccess();
-          crashlytics().recordError(err);
+          await crashReport(err);
           toast.show('Sign up failed', {
             placement: 'top',
             duration: 5000,
           });
         });
-    } catch (error) {
-      toast.show(
-        (error?.message !== 'Sign in action cancelled'
-          ? error?.message
-          : 'Sign up cancelled') || 'Sign up failed',
-        {
-          placement: 'top',
-          duration: 5000,
-        }
-      );
-      setLoading(false);
+    } catch {
+      async (error) => {
+        toast.show(
+          (error?.message !== 'Sign in action cancelled'
+            ? error?.message
+            : 'Sign up cancelled') || 'Sign up failed',
+          {
+            placement: 'top',
+            duration: 5000,
+          }
+        );
+        await crashReport(error);
+        setLoading(false);
+      };
     }
   };
 
