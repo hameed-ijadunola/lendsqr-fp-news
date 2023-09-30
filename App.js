@@ -22,6 +22,8 @@ import { View, Text } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import remoteConfig from '@react-native-firebase/remote-config';
 import { API_BASE_URL, API_KEY, API_ROUTE } from '@env';
+import codePush from 'react-native-code-push';
+
 console.log('first', { API_BASE_URL, API_KEY, API_ROUTE });
 
 const App = () => {
@@ -140,4 +142,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default codePush(App);
