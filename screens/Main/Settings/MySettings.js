@@ -34,6 +34,7 @@ import RightSvg from '../../../assets/svgs/arrow-right2.svg';
 import PersonalSvg from '../../../assets/svgs/personal.svg';
 import LogoutSvg from '../../../assets/svgs/logout.svg';
 import { capitalize } from '../../../helpers/formatText';
+import { crashReport } from '../../Auth/SignIn/SignUp';
 
 const MySettings = () => {
   const toast = useToast();
@@ -54,8 +55,8 @@ const MySettings = () => {
         borderRadius: 6,
         borderColor: 'rgba(0, 0, 0, 0.05)',
       }}
-      onPress={() => {
-        item?.route ? navigation.navigate(item?.route) : dispatch(logout());
+      onPress={async () => {
+        dispatch(logout());
       }}
     >
       {item?.image}

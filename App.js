@@ -20,14 +20,33 @@ import { ToastProvider } from 'react-native-toast-notifications';
 import { COLORS } from './constants/colors';
 import { View, Text } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
+import remoteConfig from '@react-native-firebase/remote-config';
+import { API_BASE_URL, API_KEY, API_ROUTE } from '@env';
+console.log('first', { API_BASE_URL, API_KEY, API_ROUTE });
 
 const App = () => {
   let persistor = persistStore(store);
 
   React.useEffect(() => {
-    setTimeout(() => {
-      SplashScreen.hide();
-    }, 3000);
+    remoteConfig()
+      .setDefaults({
+        baseUrl: API_BASE_URL,
+        key: API_KEY,
+        route: API_ROUTE,
+      })
+      .then(() => remoteConfig().fetchAndActivate())
+      .then((fetchedRemotely) => {
+        if (fetchedRemotely) {
+          console.log('Configs were retrieved from the backend and activated.');
+        } else {
+          console.log(
+            'No configs were fetched from the backend, and the local configs were already activated'
+          );
+        }
+        setTimeout(() => {
+          SplashScreen.hide();
+        }, 1000);
+      });
   }, []);
 
   const Toast = (props) => {
@@ -42,6 +61,7 @@ const App = () => {
           backgroundColor: props.backgroundColor
             ? props.backgroundColor
             : COLORS.red_light2,
+          marginTop: props.offsetTop ? props.offsetTop : 0,
         }}
       >
         <View

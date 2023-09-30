@@ -41,6 +41,13 @@ GoogleSignin.configure({
     '657469516814-9o8p7uelpngkdttekvfbtm0elkae810t.apps.googleusercontent.com',
 });
 
+export const crashReport = async (error) => {
+  crashlytics().recordError(error);
+  await analytics().logEvent('app_sign_up_failed', {
+    timeStamp: new Date().toISOString(),
+  });
+};
+
 const SignUp = ({ navigation }) => {
   const toast = useToast();
   const dispatch = useDispatch();
@@ -88,13 +95,6 @@ const SignUp = ({ navigation }) => {
       onSubmitHandler(resolveValues);
     },
   });
-
-  const crashReport = async (error) => {
-    crashlytics().recordError(error);
-    await analytics().logEvent('app_sign_up_failed', {
-      timeStamp: new Date().toISOString(),
-    });
-  };
 
   const checkIfEmailExists = async (email) => {
     try {

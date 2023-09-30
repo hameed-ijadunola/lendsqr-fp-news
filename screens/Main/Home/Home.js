@@ -61,11 +61,19 @@ const Home = () => {
       setRefreshing(false);
       return;
     }
-    crashlytics().log(res?.error?.data?.message);
-    toast.show(res?.error?.data?.message, {
-      placement: 'top',
-      duration: 5000,
-    });
+    console.log(res);
+    crashlytics().log(
+      res?.error?.data?.message || res?.error?.error?.replace('TypeError: ', '')
+    );
+    toast.show(
+      res?.error?.data?.message ||
+        res?.error?.error?.replace('TypeError: ', ''),
+      {
+        placement: 'top',
+        duration: 5000,
+        offsetTop: 30,
+      }
+    );
     setRefreshing(false);
   };
 
@@ -160,11 +168,15 @@ const Home = () => {
                   }
                 >
                   <View style={styles.newsSubContainer}>
-                    <Image
-                      source={{ uri: item?.urlToImage }}
-                      style={styles.img}
-                      resizeMode={'cover'}
-                    />
+                    {item?.urlToImage ? (
+                      <Image
+                        source={{ uri: item?.urlToImage }}
+                        style={styles.img}
+                        resizeMode={'cover'}
+                      />
+                    ) : (
+                      <View style={styles.img}></View>
+                    )}
                     <View style={styles.imgloader}>
                       <ActivityIndicator size={'large'} color={'#dddddd90'} />
                     </View>
