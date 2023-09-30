@@ -1,9 +1,9 @@
-import { ActivityIndicator, Platform } from 'react-native'
-import React from 'react'
-import { COLORS } from '../../constants/colors'
-import styled from 'styled-components/native'
-import CustomText from '../CustomText/CustomText'
-import Fonts from '../../constants/fonts'
+import { ActivityIndicator, Platform } from 'react-native';
+import React from 'react';
+import { COLORS } from '../../constants/colors';
+import styled from 'styled-components/native';
+import CustomText from '../CustomText/CustomText';
+import Fonts from '../../constants/fonts';
 
 const BtnWrap = styled.TouchableOpacity`
   width: ${(props) => props.width};
@@ -16,7 +16,7 @@ const BtnWrap = styled.TouchableOpacity`
   align-items: center;
   ${(props) => props.style};
   z-index: 1;
-`
+`;
 
 const ViewWrap = styled.View`
   width: ${(props) => props.width};
@@ -30,13 +30,12 @@ const ViewWrap = styled.View`
   ${(props) => props.style};
   padding-top: ${Platform.OS === 'ios' ? '10px' : '0px'};
   z-index: 1;
-`
+`;
 
 const DisabledWrap = styled.View`
   width: ${(props) => props.width};
   height: ${(props) => props.height};
   background-color: ${(props) => props.bgColor};
-  border-radius: ${(props) => props.borderRadius};
   justify-content: ${(props) => props?.jc || 'center'};
   align-items: center;
   ${(props) => props.style};
@@ -44,12 +43,12 @@ const DisabledWrap = styled.View`
   position: absolute;
   bottom: 0px;
   z-index: 3;
-`
+`;
 
 const Row = styled.View`
   flex-direction: row;
   align-items: center;
-`
+`;
 
 const Button = ({
   text,
@@ -117,15 +116,14 @@ const Button = ({
         )}
         {disabled && (
           <DisabledWrap
-            borderRadius={borderRadius}
             width={'100%'}
             height={height}
-            bgColor={'rgba(255,255,255, 0.4)'}
+            bgColor={'rgba(255,255,255, 0.1)'}
           />
         )}
       </BtnWrap>
     </>
-  )
-}
+  );
+};
 
-export default Button
+export default Button;

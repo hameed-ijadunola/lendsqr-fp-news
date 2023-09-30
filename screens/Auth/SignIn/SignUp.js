@@ -32,6 +32,8 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import GoogleSvg from '../../../assets/svgs/google.svg';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { saveToken, saveUser } from '../../../redux/features/auth/authSlice';
+import firestore from '@react-native-firebase/firestore';
+import BackSvg from '../../../assets/svgs/Back.svg';
 
 GoogleSignin.configure({
   webClientId:
@@ -50,11 +52,11 @@ const SignUp = ({ navigation }) => {
   const validationSchema = Yup.object().shape({
     email: Yup.string()
       .email('Invalid email address')
-      .required('Email is required'),
+      .required('Email address is required'),
     phone: Yup.string()
       .matches(/^\+?\d{10,14}$/, 'Invalid phone number')
       .required('Phone number is required'),
-    fullName: Yup.string().required('First Name is required'),
+    fullName: Yup.string().required('Full name is required'),
   });
 
   const {
@@ -77,19 +79,89 @@ const SignUp = ({ navigation }) => {
     validateOnChange: validateOnChange,
     enableReinitialize: true,
     validationSchema: validationSchema,
-    onSubmit: (values) => onSubmit(values),
+    onSubmit: (values) => {
+      const resolveValues = {
+        ...values,
+        email: values?.email.replace(' ', '').toLowerCase(),
+      };
+      onSubmitHandler(resolveValues);
+    },
   });
 
-  const onSubmit = async () => {
+  const checkIfEmailExists = async (email) => {
+    try {
+      const snapshot = await firestore()
+        .collection('users')
+        .where('email', '==', email)
+        .get();
+
+      return !snapshot.empty;
+    } catch (error) {
+      console.error('Error checking email existence:', error);
+      toast.show('Network error', {
+        placement: 'top',
+        duration: 5000,
+      });
+      return false;
+    }
+  };
+
+  const saveUserToFirestore = async ({ user, data }) => {
+    try {
+      console.log('saveuser', {
+        fullName: data?.fullName,
+        email: data?.email,
+        phoneNumber: data?.phone,
+        photoURL: user?.photoURL,
+        additionalInfo: user,
+      });
+
+      const userRef = firestore().collection('users').doc(user.uid);
+      const userData = {
+        fullName: data?.fullName,
+        email: data?.email,
+        phoneNumber: data?.phone,
+        photoURL: user?.photoURL,
+        additionalInfo: JSON.stringify(user),
+      };
+
+      // Set user data in Firestore
+      await userRef.set(userData);
+
+      // Retrieve the newly created user data from Firestore
+      const newUserSnapshot = await userRef.get();
+      const newUser = newUserSnapshot.data();
+
+      return newUser;
+    } catch (error) {
+      console.error('Error saving user to Firestore:', error);
+      setLoading(false);
+    }
+  };
+
+  const onSubmitHandler = async (val) => {
     try {
       if (page === 1) {
         setLoading(true);
-
+        const emailExists = await checkIfEmailExists(val?.email);
+        console.log('emailExists', emailExists);
+        if (emailExists) {
+          console.log('Email already exists');
+          toast.show(
+            'This email is already registered, Please proceed to\n sign in instead',
+            {
+              placement: 'top',
+              duration: 4000,
+            }
+          );
+          setLoading(false);
+          return;
+        }
         GoogleSignin.signOut();
         setPage(2);
         setLoading(false);
       } else if (page === 2) {
-        onGoogleButtonPress();
+        onGoogleButtonPress(val);
       }
     } catch (error) {
       crashlytics().recordError(error);
@@ -102,26 +174,47 @@ const SignUp = ({ navigation }) => {
     }
   };
 
-  const onGoogleButtonPress = async () => {
+  const onGoogleButtonPress = async (data) => {
     setLoading(true);
     try {
       await GoogleSignin.signOut();
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      const { idToken } = await GoogleSignin.signIn();
-      console.log('idToken', idToken);
+      const { idToken, user } = await GoogleSignin.signIn();
+      console.log('idToken', idToken, user.email, data);
+      if (user.email !== data?.email) {
+        setLoading(false);
+        toast.show(
+          'You must sign up with the email provided\non the form or change it',
+          {
+            placement: 'top',
+            duration: 5000,
+          }
+        );
+        return;
+      }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       console.log('googleCredential', googleCredential);
       const user_sign_in = auth().signInWithCredential(googleCredential);
       user_sign_in
-        .then((user) => {
+        .then(async (user) => {
           console.log('user', user);
+
+          const newUser = await saveUserToFirestore({ user: user?.user, data });
+          if (!newUser) {
+            setLoading(false);
+            toast.show('Sign up failed unexpectedly', {
+              placement: 'top',
+              duration: 5000,
+            });
+            return;
+          }
           setLoading(false);
-          dispatch(saveUser(user));
+          dispatch(saveUser(newUser));
           dispatch(saveToken(googleCredential.token));
           toast.show('Signed up successfully', {
-            placement: 'bottom',
+            placement: 'top',
             duration: 5000,
             backgroundColor: COLORS.green,
           });
@@ -134,147 +227,165 @@ const SignUp = ({ navigation }) => {
           GoogleSignin.revokeAccess();
           crashlytics().recordError(err);
           toast.show('Sign up failed', {
-            placement: 'bottom',
+            placement: 'top',
             duration: 5000,
           });
         });
     } catch (error) {
-      console.log('error', error);
+      console.log('error', error, error?.message);
+      toast.show(
+        (error?.message !== 'Sign in action cancelled'
+          ? error?.message
+          : 'Sign up cancelled') || 'Sign up failed',
+        {
+          placement: 'top',
+          duration: 5000,
+        }
+      );
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAwareScrollView
-      resetScrollToCoords={{ x: 0, y: 0 }}
-      contentContainerStyle={{ flexGrow: 1 }}
-      keyboardShouldPersistTaps={'handled'}
+    <SafeAreaWrap
+      style={{
+        paddingTop: page == 1 ? 36 : 16,
+        paddingBottom: 66,
+        paddingHorizontal: 24,
+        justifyContent: 'space-between',
+      }}
     >
-      <SafeAreaWrap
-        style={{
-          paddingTop: 36,
-          paddingBottom: 66,
-          paddingHorizontal: 24,
-          justifyContent: 'space-between',
-        }}
+      {page === 2 && (
+        <Row>
+          <Pressable
+            style={{
+              alignItems: 'center',
+              padding: 15,
+              paddingLeft: 0,
+            }}
+            onPress={() => setPage(1)}
+          >
+            <BackSvg />
+          </Pressable>
+        </Row>
+      )}
+      <KeyboardAwareScrollView
+        resetScrollToCoords={{ x: 0, y: 0 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps={'handled'}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Row marginBottom={13}>
-            <CustomText
-              color={COLORS.primarytext}
-              align="flex-start"
-              fontSize={32}
-              fontFamily={fonts.EuclidMedium}
+        <Row marginBottom={13}>
+          <CustomText
+            color={COLORS.primarytext}
+            align="flex-start"
+            fontSize={32}
+            fontFamily={fonts.EuclidMedium}
+          >
+            {'Create\nAccount,'}
+          </CustomText>
+        </Row>
+        <Row marginBottom={35}>
+          <CustomText
+            color={COLORS.primarytext}
+            align="flex-start"
+            fontSize={14}
+            fontFamily={fonts.EuclidRegular}
+          >
+            {page === 1 ? 'Enter your details' : 'Complete Sign up with Google'}
+          </CustomText>
+        </Row>
+
+        {page === 1 && (
+          <Col marginTop={10}>
+            <TextInput
+              label={'Full Name'}
+              placeholder="John Doe"
+              handleChange={handleChange('fullName')}
+              value={values.fullName}
+              errors={errors?.fullName}
+            />
+
+            <TextInput
+              label={'Email Address'}
+              placeholder="example@gmail.com"
+              handleChange={handleChange('email')}
+              value={values.email}
+              errors={errors?.email}
+              marginTop={18}
+            />
+            <TextInput
+              label={'Phone Number'}
+              placeholder="0800 000 0000"
+              handleChange={handleChange('phone')}
+              value={values.phone}
+              errors={errors?.phone}
+              marginTop={18}
+            />
+          </Col>
+        )}
+
+        <View style={styles.bottomBtn}>
+          {page == 1 ? (
+            <Button
+              text="Continue"
+              top={16}
+              onPress={() => {
+                setValidateOnChange(true);
+                handleSubmit();
+              }}
+              disabled={!isValid}
+              loading={loading}
+            />
+          ) : (
+            <Button
+              style={
+                !loading
+                  ? Platform.OS === 'ios'
+                    ? [styles.googleBtnIos]
+                    : [styles.googleBtnAndr]
+                  : [styles.grayBtn]
+              }
+              onPress={() => {
+                handleSubmit();
+              }}
             >
-              {'Create\nAccount,'}
-            </CustomText>
-          </Row>
-          <Row marginBottom={35}>
+              {!loading ? (
+                <>
+                  <GoogleSvg width={25} height={25} marginRight={15} />
+                  <Text style={styles.googleBtnTxt}>Complete Sign up</Text>
+                </>
+              ) : (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              )}
+            </Button>
+          )}
+          <View style={{ flexDirection: 'row', marginTop: 30 }}>
             <CustomText
               color={COLORS.primarytext}
               align="flex-start"
               fontSize={14}
               fontFamily={fonts.EuclidRegular}
             >
-              {page === 1
-                ? 'Enter your details'
-                : 'Complete Sign up with Google'}
+              Have a registered account?
             </CustomText>
-          </Row>
-
-          {page === 1 && (
-            <Col marginTop={10}>
-              <TextInput
-                label={'Full Name'}
-                placeholder="John Doe"
-                handleChange={handleChange('fullName')}
-                value={values.fullName}
-                errors={errors?.fullName}
-              />
-
-              <TextInput
-                label={'Email Address'}
-                placeholder="example@gmail.com"
-                handleChange={handleChange('email')}
-                value={values.email}
-                errors={errors?.email}
-                marginTop={18}
-              />
-              <TextInput
-                label={'Phone Number'}
-                placeholder="0800 000 0000"
-                handleChange={handleChange('phone')}
-                value={values.phone}
-                errors={errors?.phone}
-                marginTop={18}
-              />
-            </Col>
-          )}
-
-          <View style={styles.bottomBtn}>
-            {page == 1 ? (
-              <Button
-                text="Continue"
-                top={16}
-                onPress={() => {
-                  setValidateOnChange(true);
-                  handleSubmit();
-                }}
-                disabled={!isValid}
-                loading={loading}
-              />
-            ) : (
-              <Button
-                style={
-                  !loading
-                    ? Platform.OS === 'ios'
-                      ? [styles.googleBtnIos]
-                      : [styles.googleBtnAndr]
-                    : [styles.grayBtn]
-                }
-                onPress={onSubmit}
-              >
-                {!loading ? (
-                  <>
-                    <GoogleSvg width={25} height={25} marginRight={15} />
-                    <Text style={styles.googleBtnTxt}>Complete Sign up</Text>
-                  </>
-                ) : (
-                  <ActivityIndicator size="small" color={COLORS.white} />
-                )}
-              </Button>
-            )}
-            <View style={{ flexDirection: 'row', marginTop: 30 }}>
+            <Pressable
+              onPress={() => {
+                navigation.navigate('SignIn');
+              }}
+            >
               <CustomText
                 color={COLORS.primarytext}
                 align="flex-start"
                 fontSize={14}
                 fontFamily={fonts.EuclidRegular}
               >
-                Have a registered account?
+                {` Sign in`}
               </CustomText>
-              <Pressable
-                onPress={() => {
-                  navigation.navigate('SignIn');
-                }}
-              >
-                <CustomText
-                  color={COLORS.primarytext}
-                  align="flex-start"
-                  fontSize={14}
-                  fontFamily={fonts.EuclidRegular}
-                >
-                  {` Sign in`}
-                </CustomText>
-              </Pressable>
-            </View>
+            </Pressable>
           </View>
-        </ScrollView>
-      </SafeAreaWrap>
-    </KeyboardAwareScrollView>
+        </View>
+      </KeyboardAwareScrollView>
+    </SafeAreaWrap>
   );
 };
 
@@ -284,7 +395,7 @@ const styles = StyleSheet.create({
   bottomBtn: {
     justifyContent: 'flex-end',
     alignItems: 'flex-start',
-    bottom: 0,
+    top: 0,
     flexGrow: 1,
     backgroundColor: COLORS.white,
   },

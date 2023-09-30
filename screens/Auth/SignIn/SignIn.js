@@ -32,6 +32,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import GoogleSvg from '../../../assets/svgs/google.svg';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { saveToken, saveUser } from '../../../redux/features/auth/authSlice';
+import firestore from '@react-native-firebase/firestore';
 
 GoogleSignin.configure({
   webClientId:
@@ -85,41 +86,79 @@ const SignIn = ({ navigation }) => {
     })();
   }, []);
 
+  const checkIfEmailExists = async (email) => {
+    try {
+      const snapshot = await firestore()
+        .collection('users')
+        .where('email', '==', email)
+        .get();
+      if (!snapshot.empty) {
+        console.log('snapshot.docs[0]', snapshot.docs[0].data());
+        return { exists: true, document: snapshot.docs[0].data() };
+      } else {
+        return { exists: false, document: null };
+      }
+    } catch (error) {
+      console.error('Error checking email existence:', error);
+      toast.show('Network error', {
+        placement: 'top',
+        duration: 5000,
+      });
+      return false;
+    }
+  };
+
   async function onSubmit() {
     setLoading(true);
     try {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      const { idToken } = await GoogleSignin.signIn();
-      console.log('idToken', idToken);
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      console.log('googleCredential', googleCredential);
-      const user_sign_in = auth().signInWithCredential(googleCredential);
-      user_sign_in
-        .then((user) => {
-          console.log('user', user);
-          setLoading(false);
-          dispatch(saveUser(user));
-          dispatch(saveToken(googleCredential.token));
-          toast.show('Signed in successfully', {
-            placement: 'bottom',
-            duration: 5000,
-            backgroundColor: COLORS.green,
+      const authInfo = await GoogleSignin.signIn();
+      const { idToken } = authInfo;
+      console.log('idToken', authInfo);
+      const emailExists = await checkIfEmailExists(authInfo?.user?.email);
+      console.log('emailExists', emailExists);
+      if (emailExists.exists) {
+        const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+        console.log('googleCredential', googleCredential);
+        const user_sign_in = auth().signInWithCredential(googleCredential);
+        user_sign_in
+          .then((user) => {
+            console.log('user', emailExists?.document);
+            setLoading(false);
+            dispatch(saveUser(emailExists?.document));
+            dispatch(saveToken(googleCredential.token));
+            toast.show('Signed in successfully', {
+              placement: 'bottom',
+              duration: 5000,
+              backgroundColor: COLORS.green,
+            });
+          })
+          .catch((err) => {
+            console.log('err\n\n', err);
+            setLoading(false);
+            dispatch(saveUser(null));
+            dispatch(saveToken(null));
+            GoogleSignin.revokeAccess();
+            crashlytics().recordError(err);
+            toast.show('Signin failed', {
+              placement: 'bottom',
+              duration: 5000,
+            });
           });
-        })
-        .catch((err) => {
-          console.log('err\n\n', err);
-          setLoading(false);
-          dispatch(saveUser(null));
-          dispatch(saveToken(null));
-          GoogleSignin.revokeAccess();
-          crashlytics().recordError(err);
-          toast.show('Signin failed', {
-            placement: 'bottom',
-            duration: 5000,
-          });
-        });
+      } else {
+        console.log('emailExists.exists', emailExists.exists);
+        toast.show(
+          'This email is not registered, Please proceed to\n sign up instead',
+          {
+            placement: 'top',
+            duration: 4000,
+          }
+        );
+        setLoading(false);
+        return;
+      }
     } catch (error) {
       console.log('error', error);
       setLoading(false);

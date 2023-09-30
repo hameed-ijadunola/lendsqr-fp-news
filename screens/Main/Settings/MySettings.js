@@ -40,7 +40,7 @@ const MySettings = () => {
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
   const { user } = useSelector((state) => state.userAuth);
-  console.log('user', user?.user);
+  console.log('user', user);
   const dispatch = useDispatch();
 
   const Logout = ({ item }) => (
@@ -139,9 +139,7 @@ const MySettings = () => {
           }}
         >
           <Image
-            source={
-              user?.user?.photoURL ? { uri: user?.user?.photoURL } : AccountPng
-            }
+            source={user?.photoURL ? { uri: user?.photoURL } : AccountPng}
             style={{ width: 48, height: 48, borderRadius: 24 }}
           />
 
@@ -158,7 +156,7 @@ const MySettings = () => {
                 fontSize={16}
                 fontFamily={fonts.EuclidMedium}
               >
-                {capitalize(`${user?.user?.displayName}`)}
+                {capitalize(`${user?.fullName}`)}
               </CustomText>
               <CustomText
                 color={COLORS.white}
@@ -167,9 +165,9 @@ const MySettings = () => {
                 fontSize={12}
                 fontFamily={fonts.EuclidRegular}
               >
-                {user?.user?.email}
+                {user?.email}
               </CustomText>
-              {user?.user?.phoneNumber && (
+              {user?.phoneNumber && (
                 <CustomText
                   color={COLORS.white}
                   align="left"
@@ -177,7 +175,7 @@ const MySettings = () => {
                   fontSize={12}
                   fontFamily={fonts.EuclidRegular}
                 >
-                  {user?.user?.phoneNumber}
+                  {user?.phoneNumber}
                 </CustomText>
               )}
             </View>

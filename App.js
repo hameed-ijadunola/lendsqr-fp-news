@@ -46,7 +46,7 @@ const App = () => {
             <Text
               style={{
                 color: props.titleColor,
-                fontSize: 11,
+                fontSize: 14,
                 fontFamily: 'Poppins_500Medium',
               }}
             >
@@ -57,7 +57,7 @@ const App = () => {
             <Text
               style={{
                 color: props.textColor,
-                fontSize: 11,
+                fontSize: 14,
                 fontFamily: 'Poppins_400Regular',
               }}
             >
@@ -69,7 +69,7 @@ const App = () => {
           <Text
             style={{
               color: props.actionColor,
-              fontSize: 11,
+              fontSize: 14,
               fontFamily: 'Poppins_600SemiBold',
             }}
           >
@@ -81,7 +81,7 @@ const App = () => {
           <Text
             style={{
               color: props.textColor ? props.textColor : COLORS.black,
-              fontSize: 11,
+              fontSize: 14,
               fontFamily: 'Poppins_400Regular',
             }}
           >
@@ -93,14 +93,12 @@ const App = () => {
   };
   return (
     <ToastProvider
-      // placement='bottom | top'
+      // placement={'top'}
       // duration={5000}
-      // animationType='slide-in | zoom-in'
-      // animationDuration={250}
-      offsetTop={120} // offset for both top and bottom toasts
-      offsetBottom={100} // offset for both top and bottom toasts
-      // offsetTop={30}
-      // offsetBottom={40}
+      animationType={'slide-in'}
+      animationDuration={500}
+      offsetTop={20}
+      offsetBottom={100}
       swipeEnabled={true}
       renderToast={(toast) => <Toast {...toast} />}
     >
